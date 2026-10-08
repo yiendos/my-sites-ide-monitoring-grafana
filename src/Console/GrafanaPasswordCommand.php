@@ -86,16 +86,6 @@ class GrafanaPasswordCommand extends Command
 
         $io->success('Grafana\'s admin password is changed - log in as admin.');
 
-        if (getenv('GRAFANA_ANONYMOUS') !== 'false') {
-            $io->text([
-                'Grafana still lets everyone in as Admin without logging in, so nothing asks for it yet.',
-                'To require it, set this in the IDE\'s .env, then run monitoring:grafana-start:',
-                '',
-                '    GRAFANA_ANONYMOUS=false',
-                '',
-            ]);
-        }
-
         return Command::SUCCESS;
     }
 }

@@ -1,9 +1,9 @@
 # [grafana]
 # Defaults live in this plugin's .env. GRAFANA_PORT is the host port for the web UI
-# (http://localhost:3000). Grafana lets you straight in as Admin unless GRAFANA_ANONYMOUS=false,
-# which brings back the login form - admin / GRAFANA_ADMIN_PASSWORD, which only takes effect
-# when Grafana first creates its database (change it later with monitoring:grafana-password).
+# (http://localhost:3000). Log in as admin / GRAFANA_ADMIN_PASSWORD, which only takes effect when
+# Grafana first creates its database (change it later with monitoring:grafana-password).
+# GRAFANA_ANONYMOUS=true also lets anyone in as Admin without logging in.
 # Run `php my-sites-ide monitoring:grafana-start` after changing any of them.
 #GRAFANA_PORT=3000
-#GRAFANA_ANONYMOUS=true
+#GRAFANA_ANONYMOUS=false
 #GRAFANA_ADMIN_PASSWORD=admin

@@ -40,6 +40,10 @@ php my-sites-ide monitoring:grafana-start
 Grafana is opt-in: it doesn't autostart. Start it with `monitoring:grafana-start`, which writes its
 data sources first - start the other monitoring plugins before it.
 
+Then log in at http://localhost:3000 as `admin`, password `admin` (or `GRAFANA_ADMIN_PASSWORD`, if
+you set it before the first start). Grafana offers to change it straight away;
+`monitoring:grafana-password` changes it any time after.
+
 ## The monitoring plugins
 
 | Plugin | Service | Role |
@@ -84,14 +88,14 @@ Data sources are provisioned, so they can't be edited in the UI - add your own a
 |---|---|
 | `monitoring:grafana-start` | Writes the data sources for the monitoring plugins installed, then `docker compose up -d --build grafana`. Restarts a running Grafana when the data sources changed, and recreates one whose compose config changed (e.g. a new `GRAFANA_PORT`) |
 | `monitoring:grafana-stop` | `docker compose stop grafana`, leaving the rest of the IDE running |
-| `monitoring:grafana-password [password]` | Sets the `admin` user's password, asking for it (hidden) when it's left out. Grafana has to be running. Warns when `GRAFANA_ANONYMOUS` isn't `false`, since nothing asks for the password until then |
+| `monitoring:grafana-password [password]` | Sets the `admin` user's password, asking for it (hidden) when it's left out. Grafana has to be running |
 
 ## Configuration
 
 | Variable | Default | What it does |
 |---|---|---|
 | `GRAFANA_PORT` | `3000` (this plugin's `.env`) | The host port for the web UI |
-| `GRAFANA_ANONYMOUS` | `true` | Straight in as Admin, no login. `false` brings back the login form |
+| `GRAFANA_ANONYMOUS` | `false` | `true` also lets anyone in as Admin without logging in. The login form stays either way |
 | `GRAFANA_ADMIN_PASSWORD` | `admin` | The `admin` user's first password - only applied when Grafana creates its database. Change it afterwards with `monitoring:grafana-password` |
 
 Set any of them in the IDE's root `.env`, which wins over the plugin's defaults, then run
@@ -123,15 +127,15 @@ removes a monitoring plugin.
 **Port 3000 is already allocated.** `docker ps --filter publish=3000` shows which container has it,
 or move Grafana with `GRAFANA_PORT`.
 
-**The login form appeared after setting `GRAFANA_ANONYMOUS=false`, and `admin` doesn't work.** The
-admin password is only set when Grafana creates its database; `GRAFANA_ADMIN_PASSWORD` changes made
-later don't apply. Set it with `php my-sites-ide monitoring:grafana-password`.
+**`admin` doesn't log in.** The admin password is only set when Grafana creates its database;
+`GRAFANA_ADMIN_PASSWORD` changes made later don't apply. Set it with
+`php my-sites-ide monitoring:grafana-password`.
 
 ## Known gaps
 
-- Grafana 13 logs that anonymous access with a role other than Viewer is deprecated. It still
-  works as Admin today; a future Grafana may limit anonymous users to Viewer, which can't use
-  Explore - set `GRAFANA_ANONYMOUS=false` and log in if that happens.
+- Anonymous access (`GRAFANA_ANONYMOUS=true`) is rough in Grafana 13: it shows "not authorised"
+  for per-user features such as stars and teams, and Grafana logs that anonymous roles other than
+  Viewer are deprecated - a future version may limit it to Viewer, which can't use Explore.
 - With anonymous access on, anyone who can reach port 3000 on your machine is a Grafana Admin, and
   can query every log and metric in the IDE.
 - On Linux hosts, `storage/plugins/grafana/` is created by your user while Grafana runs as uid 472,

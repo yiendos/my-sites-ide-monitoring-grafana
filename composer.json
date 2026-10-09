@@ -1,0 +1,32 @@
+{
+    "name": "yiendos/my-sites-ide-monitoring-grafana",
+    "description": "Grafana dashboards and Explore for my-sites-ide - wires itself to whichever of the Prometheus, Loki and Tempo plugins are installed",
+    "type": "my-sites-ide-plugin",
+    "license": "MIT",
+    "keywords": ["my-sites-ide", "grafana", "monitoring", "observability"],
+    "authors": [
+        {
+            "name": "Paul Yiend",
+            "email": "yiendos@sbmatrix.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Yiendos\\MySitesIde\\Monitoring\\Grafana\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "symfony/console": "^7.3"
+    },
+    "extra": {
+        "my-sites-ide": {
+            "commands": "src/Console",
+            "compose": "docker-compose.yml",
+            "env": ".env",
+            "env-example": "env-example",
+            "services": ["grafana"],
+            "storage": true
+        }
+    }
+}

@@ -1,0 +1,38 @@
+services:
+    grafana:
+        image: ${NAMESPACE}_grafana:latest
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            - "${GRAFANA_PORT:-3000}:3000"
+        environment:
+            # Grafana's database and plugins, and the data sources monitoring:grafana-start writes,
+            # live in storage/plugins/grafana/ ("storage": true in composer.json mounts it at /storage)
+            GF_PATHS_DATA: /storage/data
+            GF_PATHS_PROVISIONING: /storage/provisioning
+            # log in as admin; GRAFANA_ANONYMOUS=true lets anyone in as Admin as well. The login form
+            # stays either way - Grafana 13's UI still sends anonymous users to it (e.g. "not authorised"
+            # on /api/user/*), and deprecates anonymous roles other than Viewer
+            GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_ANONYMOUS:-false}
+            GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+            # only applied when Grafana creates its database, on the first start
+            GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+            GF_ANALYTICS_REPORTING_ENABLED: "false"
+            GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+            GF_NEWS_NEWS_FEED_ENABLED: "false"
+        labels:
+            # scraped by the prometheus plugin, when it's installed
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "3000"
+        # Docker's own copy of the container's output, capped (json-file only rotates by size) - the
+        # searchable history is in Loki, for its retention
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+        networks:
+            - my-sites-ide
+
+    # opt-in: run monitoring:grafana-start (it writes the data sources first), or add grafana to APP

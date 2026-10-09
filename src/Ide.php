@@ -58,6 +58,17 @@ final class Ide
     }
 
     /**
+     * A file shipped with this package, e.g. dashboards/prometheus
+     *
+     * @param string $file
+     * @return string
+     */
+    public static function package(string $file = ''): string
+    {
+        return dirname(__DIR__) . ($file === '' ? '' : "/{$file}");
+    }
+
+    /**
      * Whether an installed plugin provides the compose service, e.g. loki -
      * read from Plugins\Discover's cache rather than a composer dependency, so
      * the monitoring plugins work in any combination

@@ -3,7 +3,7 @@
 [Grafana](https://grafana.com/oss/grafana/) for [my-sites-ide](https://github.com/yiendos/my-sites-ide):
 dashboards and Explore at http://localhost:3000, wired to whichever of the IDE's other monitoring
 plugins are installed - Prometheus for metrics, Loki for logs, Tempo for traces - with links
-between them.
+between them, and container dashboards ready to open.
 
 Written for: developers running sites in my-sites-ide who want to see their sites' metrics, logs
 and traces in one place.
@@ -13,6 +13,7 @@ and traces in one place.
 - [Installation](#installation)
 - [The monitoring plugins](#the-monitoring-plugins)
 - [Data sources](#data-sources)
+- [Dashboards](#dashboards)
 - [Command reference](#command-reference)
 - [Configuration](#configuration)
 - [What it uses from the IDE](#what-it-uses-from-the-ide)
@@ -82,11 +83,35 @@ source is deleted rather than left pointing at nothing.
 
 Data sources are provisioned, so they can't be edited in the UI - add your own alongside them.
 
+## Dashboards
+
+With the prometheus plugin installed, `monitoring:grafana-start` also provisions these into a
+**Containers** folder - CPU, memory, network and IO for every IDE container, from the container
+metrics the [alloy plugin](https://github.com/yiendos/my-sites-ide-monitoring-alloy) collects:
+
+| Dashboard | From grafana.com | What it's for |
+|---|---|---|
+| y0nei's cAdvisor dashboard | [19724](https://grafana.com/grafana/dashboards/19724) by y0nei | The detail: per-container CPU, memory (RSS, cache, swap, limits), network and IO, with a container picker |
+| cAdvisor Docker Insights | [19908](https://grafana.com/grafana/dashboards/19908) by mercxry | An overview: running containers, CPU, memory, network, IO and restarts |
+| Cadvisor exporter | [14282](https://grafana.com/grafana/dashboards/14282) by kokorinav | A compact view, with a table of the containers and their images |
+
+They ship in the plugin's `dashboards/prometheus/` - each one's latest revision, with its
+`${DS_PROMETHEUS}` input pointed at the Prometheus data source's fixed `prometheus` UID and given a
+fixed dashboard UID (`docker-cadvisor`, `docker-insights`, `docker-cadvisor-exporter`). They're
+copied into `storage/plugins/grafana/dashboards/`, which Grafana checks every 10 seconds; remove
+the prometheus plugin and run `monitoring:grafana-start` again, and they're deleted.
+
+They're provisioned, so changes can't be saved over them - use **Save as** to keep an edited copy
+outside the Containers folder. Anything you put in `storage/plugins/grafana/dashboards/` yourself
+is removed on the next start.
+
+Panels that need a container memory limit show nothing, as the IDE's containers don't set one.
+
 ## Command reference
 
 | Command | What it does |
 |---|---|
-| `monitoring:grafana-start` | Writes the data sources for the monitoring plugins installed, then `docker compose up -d --build grafana`. Restarts a running Grafana when the data sources changed, and recreates one whose compose config changed (e.g. a new `GRAFANA_PORT`) |
+| `monitoring:grafana-start` | Writes the data sources and dashboards for the monitoring plugins installed, then `docker compose up -d --build grafana`. Restarts a running Grafana when the data sources or dashboard provider changed, and recreates one whose compose config changed (e.g. a new `GRAFANA_PORT`) |
 | `monitoring:grafana-stop` | `docker compose stop grafana`, leaving the rest of the IDE running |
 | `monitoring:grafana-password [password]` | Sets the `admin` user's password, asking for it (hidden) when it's left out. Grafana has to be running |
 
@@ -109,7 +134,7 @@ copies them in, commented out.
 | `NAMESPACE` (root `.env`) | the image name, `${NAMESPACE}_grafana` |
 | `IDE_ROOT` (set by the CLI and `_dev/cache/ide.env`) | finding the plugin list and storage |
 | `_dev/cache/plugins.php` (written by `Plugins\Discover`) | which monitoring plugins are installed |
-| `storage/plugins/grafana/` (`"storage": true`) | Grafana's database, plugins and provisioning |
+| `storage/plugins/grafana/` (`"storage": true`) | Grafana's database, plugins, provisioning and dashboards |
 | the `my-sites-ide` network | reaching `prometheus`, `loki` and `tempo` |
 
 The container carries `prometheus.io/scrape` labels, so the prometheus plugin scrapes Grafana's
@@ -120,6 +145,10 @@ own metrics.
 **A data source is missing, or one for a removed plugin is still there.** The data sources are
 written when Grafana starts: run `monitoring:grafana-start` after `composer update` adds or
 removes a monitoring plugin.
+
+**The Containers dashboards are empty.** They need the alloy plugin running as well as
+Prometheus - its container metrics are what they show. Run `monitoring:alloy-start` after
+installing Prometheus.
 
 **A data source test fails.** Its service isn't running - start it with
 `monitoring:<service>-start`.
